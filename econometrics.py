@@ -27,6 +27,7 @@ def get_interest_rates(start_date, plot=True):
     interest_rates = pd.DataFrame()
     for name, data in rates.items():
         interest_rates[name] = data
+    interest_rates.fillna(method='ffill', inplace=True)
 
     if plot:
         interest_rates.plot()
@@ -67,4 +68,4 @@ def get_business_activity(start_date, plot=True):
 #print release
 
 
-get_interest_rates(start_date)
+intrate = get_interest_rates(start_date)
