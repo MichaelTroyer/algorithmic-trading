@@ -8,8 +8,6 @@ data_handler:
     Module for specifying classes for collecting, cleaning,
     storing, and delivering data to the strategy class.
 
-
-|TEST|
 """
 
 
