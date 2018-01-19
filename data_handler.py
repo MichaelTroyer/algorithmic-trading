@@ -17,6 +17,7 @@ from datetime import date, datetime, timedelta
 from pandas_datareader import DataReader
 
 import os
+import platform
 import sqlite3
 import traceback
 
@@ -67,7 +68,11 @@ class DataHandler(object):
 
 class WebToDatabase(DataHandler):
 
-    def __init__(self, db_path):
+    def __init__(self, db_path=None):
+        if not db_path:
+            if platform.system() == 'Windows': root = 'C:\Users'
+            if platform.system() == 'Linux': root = '/home'
+            db_path = os.path.join(root, 'michael', 'Documents', 'databases', 'securities_master.db')
 
         # Instantiate database
         self.db_path = db_path

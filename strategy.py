@@ -196,9 +196,9 @@ class MovingAverageConvergenceDivergence(Strategy):
         print 'Moving Average Convergence Divergence'.center(70)
         print 'Periods: [{}, {}, {}]'.format(*self.periods)
         print 'Position                    : {}'.format(self.data.Position.values[-1])
-        print 'Current Price               : {:.4}'.format(self.data.Close.values[-1])
-        print 'Current Price Short EMA     : {:.4}'.format(self.data[self.short_ema].values[-1])
-        print 'Current Price Long EMA      : {:.4}'.format(self.data[self.long_ema].values[-1])
+        print 'Current Price               : {}'.format(self.data.Close.values[-1])
+        print 'Current Price Short EMA     : {}'.format(self.data[self.short_ema].values[-1])
+        print 'Current Price Long EMA      : {}'.format(self.data[self.long_ema].values[-1])
         print 'Current Volume              : {}'.format(self.data.Volume.values[-1])
         print 'Current Volume Long EMA     : {}'.format(int(self.data[self.volume_ema].values[-1]))
         print
@@ -214,7 +214,7 @@ class MovingAverageConvergenceDivergence(Strategy):
     def _plot(self):
         fig, axes = plt.subplots(nrows=5, ncols=2, figsize=(20, 15),
                                  gridspec_kw = {'width_ratios':[2, 1]})
-        fig.tight_layout()
+#        fig.tight_layout()
 
         self.data.Close.plot(ax=axes[0][0], alpha=0.3, rot=45)
         self.data[[self.short_ema, self.long_ema]].plot(ax=axes[0][0], rot=45)
@@ -227,7 +227,7 @@ class MovingAverageConvergenceDivergence(Strategy):
         self.data[['MACD', self.macd_ema]].plot(ax=axes[1][0])
         self.data.MACD_Delta.plot(kind='area', alpha=0.3, stacked=False, ax=axes[1][0], rot=45)
 
-        self.data.Volume.plot(ax=axes[2][0], alpha=0.2)
+        self.data.Volume.plot(ax=axes[2][0], alpha=0.3)
         self.data[[self.volume_ema, 'Volume_EMA_upper', 'Volume_EMA_lower']].plot(ax=axes[2][0])
 
         self.data.D.plot(ax=axes[3][0], label='Oscillator')
@@ -247,7 +247,7 @@ class MovingAverageConvergenceDivergence(Strategy):
         self.short_data[['MACD', self.macd_ema]].plot(ax=axes[1][1])
         self.short_data.MACD_Delta.plot(kind='area', alpha=0.3, stacked=False, ax=axes[1][1], rot=45)
 
-        self.short_data.Volume.plot(ax=axes[2][1], alpha=0.2)
+        self.short_data.Volume.plot(ax=axes[2][1], alpha=0.3)
         self.short_data[[self.volume_ema, 'Volume_EMA_upper', 'Volume_EMA_lower']].plot(ax=axes[2][1])
 
         self.short_data.D.plot(ax=axes[3][1], label='Oscillator')
@@ -277,9 +277,7 @@ class MovingAverageConvergenceDivergence(Strategy):
 
 if __name__ == '__main__':
     from data_handler import WebToDatabase as qdb
-#    db = r'/home/michael/Documents/trading/securities_master.db'
-    db = r'C:\Users\michael\Documents\databases\securities_master.db'
-    data_handle = qdb(db)
+    data_handle = qdb()
     macd = MovingAverageConvergenceDivergence((5, 25, 25), '2017-01-01', data_handle)
-    print macd.process_symbol('AAPL')
-#    macd.process_symbol('GOOG')
+#    print macd.process_symbol('AAPL')
+    macd.process_symbol('GOOG')

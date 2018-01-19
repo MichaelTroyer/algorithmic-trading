@@ -506,9 +506,7 @@ class MarkowitzMeanVariance(Portfolio):
 
 if __name__ == '__main__':
     from data_handler import WebToDatabase as webdb
-    db = r'/home/michael/Documents/trading/securities_master.db'
-#    db = r'C:\Users\michael\Documents\databases\securities_master.db'
-    data_handle = webdb(db_path)
+    data_handle = webdb()
     stocks = {
          'LGL':  12,
          'RVSB': 22,
