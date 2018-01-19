@@ -20,8 +20,7 @@ class Strategy(object):
     Strategy is an abstract base class providing an interface for
     all subsequent (inherited) strategy objects.
 
-    Enforces: get_DataFrame() method for retrieving stock data as a
-    Pandas DataFrame object.
+    Enforces: process_symbol() method for calculating buy/sell signals for a given ticker.
     """
 
     __metaclass__ = ABCMeta
@@ -32,7 +31,7 @@ class Strategy(object):
         Processes the stock ticker and returns the signal with
         optional summary and plot
         """
-        raise NotImplementedError("Should implement plot()")
+        raise NotImplementedError("Should implement process_symbol()")
 
 
 class MovingAverageConvergenceDivergence(Strategy):
@@ -125,7 +124,9 @@ class MovingAverageConvergenceDivergence(Strategy):
         last_macd = self.data.MACD.tolist()[-1]
         last_macd_ema = self.data[self.macd_ema].tolist()[-1]
 
-        if (self.AnnualizedStrategyLogRet > self.AnnualizedMarketLogRet > 0):
+        #TODO: Change 0 to an econometric benchmark - ie. SPY return
+        benchmark = 0.15
+        if (self.AnnualizedStrategyLogRet > self.AnnualizedMarketLogRet > benchmark):
             if last_macd > last_macd_ema > 0:
                 return 'BUY'
             elif last_macd < last_macd_ema < 0:
@@ -133,7 +134,7 @@ class MovingAverageConvergenceDivergence(Strategy):
             else:
                 return 'NONE'
         else:
-            return 'FAIL'
+            return 'PASS'
 
     def _period_metrics(self, buy_date_price_tuples, sell_date_price_tuples):
 

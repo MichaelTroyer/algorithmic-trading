@@ -64,6 +64,7 @@ class TradingSession():
 
         seen = set()
         for sector in self.top_sectors:
+            #TODO: Parameterize sector and stock screening critieria
 #            print 'Evaluating sector: {}'.format(sector)
             sector_stocks = self.screen.stock_screen(
                     Industry       = sector,
@@ -151,7 +152,7 @@ class TradingSession():
         for symbol in self.symbols:
             try:
                 signal = self.strategy.process_symbol(symbol)
-                if signal in ['FAIL', 'SELL']:
+                if signal in ['PASS', 'SELL']:
                     self.create_session_event(symbol, 'SELL')
             except Exception as e:
                 raise Exception, '[+] Evaluate Holdings Error - {}'.format(e)

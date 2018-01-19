@@ -103,10 +103,15 @@ class StockScreen():
         100 stocks in a given sector, ranked by descending volume.
         '''
         top_sectors = {sector: self.stock_screen(
-                Industry=sector,
-                ResultsPerPage='OneHundred',
-                SortyBy='Volume',
-                SortDirection='Descending'
+                Industry       = sector,
+                TradesShareMin = 1,
+                TradesShareMax = 20,
+                TradeVolMin    = None,
+                TradeVolMax    = 1000000,
+                PERatioMin     = 0,
+                ResultsPerPage = 'OneHundred',
+                SortyBy        = 'Volume',
+                SortDirection  = 'Descending'
                 )
                 for sector in self.sectors}
 
