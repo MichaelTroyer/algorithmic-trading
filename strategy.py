@@ -100,6 +100,18 @@ class MovingAverageConvergenceDivergence(Strategy):
 
             self.return_ratio = self.AnnualizedStrategyLogRet / self.AnnualizedMarketLogRet
 
+            self.data['K'] = (100 *
+                     ((self.data.Close - self.data.Low.rolling(window=14,center=False).min()) /
+                      (self.data.High.rolling(window=14,center=False).max() -
+                       self.data.Low.rolling(window=14,center=False).min()))
+                     )
+
+            self.data['D'] = self.data.K.rolling(window=3,center=False).mean()
+            slow = True
+            if slow:
+                # If slow stochaastic, roll ma_period window again
+                self.data['D'] = self.data.D.rolling(window=3,center=False).mean()
+
             if summarize:
                 self._summary()
             if plot:
@@ -107,7 +119,7 @@ class MovingAverageConvergenceDivergence(Strategy):
             return self._signal()
 
         except Exception as e:
-            raise Exception, '[+] Strategy Error - {}'.format(e)
+            raise Exception, '[+] Strategy Error - [{}]\n{}'.format(e, traceback.format_exc())
 
     def _signal(self):
         last_macd = self.data.MACD.tolist()[-1]
@@ -200,33 +212,74 @@ class MovingAverageConvergenceDivergence(Strategy):
         self._period_metrics(self.crossover_up, self.crossover_dw)
 
     def _plot(self):
-        fig, axes = plt.subplots(nrows=4, ncols=1, figsize=(10, 15), sharex=True)
+        fig, axes = plt.subplots(nrows=5, ncols=2, figsize=(20, 15),
+                                 gridspec_kw = {'width_ratios':[2, 1]})
         fig.tight_layout()
-        self.data.Close.plot(ax=axes[0], alpha=0.3, rot=45)
-        self.data[[self.short_ema, self.long_ema]].plot(ax=axes[0], rot=45)
+
+        self.data.Close.plot(ax=axes[0][0], alpha=0.3, rot=45)
+        self.data[[self.short_ema, self.long_ema]].plot(ax=axes[0][0], rot=45)
         up_xs, up_ys = zip(*self.crossover_up)
         dw_xs, dw_ys = zip(*self.crossover_dw)
-        axes[0].scatter(up_xs, up_ys, c='b', label='Buy')
-        axes[0].scatter(dw_xs, dw_ys, c='r', label='Sell')
-        axes[0].legend()
-        self.data[['MACD', self.macd_ema]].plot(ax=axes[1])
-        self.data.MACD_Delta.plot(kind='area', alpha=0.3, stacked=False, ax=axes[1], rot=45)
-        self.data.Volume.plot(ax=axes[2], alpha=0.2)
-        self.data[[self.volume_ema, 'Volume_EMA_upper', 'Volume_EMA_lower']].plot(ax=axes[2])
-        self.data[['CumuMarketRet', 'CumuStrategyRet']].plot(ax=axes[3], rot=45)
-        axes[0].set_ylabel('Closing Price')
-        axes[1].set_ylabel('Price Difference')
-        axes[2].set_ylabel('Trade Volume')
-        axes[3].set_ylabel('Cumulative Returns')
+        axes[0][0].scatter(up_xs, up_ys, c='b', label='Buy')
+        axes[0][0].scatter(dw_xs, dw_ys, c='r', label='Sell')
+        axes[0][0].legend()
+
+        self.data[['MACD', self.macd_ema]].plot(ax=axes[1][0])
+        self.data.MACD_Delta.plot(kind='area', alpha=0.3, stacked=False, ax=axes[1][0], rot=45)
+
+        self.data.Volume.plot(ax=axes[2][0], alpha=0.2)
+        self.data[[self.volume_ema, 'Volume_EMA_upper', 'Volume_EMA_lower']].plot(ax=axes[2][0])
+
+        self.data.D.plot(ax=axes[3][0], label='Oscillator')
+        axes[3][0].axhline(y=80, xmin=0, xmax=1, color='r')
+        axes[3][0].axhline(y=20, xmin=0, xmax=1, color='r')
+        axes[3][0].legend()
+
+        self.data[['CumuMarketRet', 'CumuStrategyRet']].plot(ax=axes[4][0], rot=45)
+
+        # Plot the short-term
+        self.short_data = self.data.tail(30)
+
+        self.short_data.Close.plot(ax=axes[0][1], alpha=0.3, rot=45)
+        self.short_data[[self.short_ema, self.long_ema]].plot(ax=axes[0][1], rot=45)
+        axes[0][1].legend()
+
+        self.short_data[['MACD', self.macd_ema]].plot(ax=axes[1][1])
+        self.short_data.MACD_Delta.plot(kind='area', alpha=0.3, stacked=False, ax=axes[1][1], rot=45)
+
+        self.short_data.Volume.plot(ax=axes[2][1], alpha=0.2)
+        self.short_data[[self.volume_ema, 'Volume_EMA_upper', 'Volume_EMA_lower']].plot(ax=axes[2][1])
+
+        self.short_data.D.plot(ax=axes[3][1], label='Oscillator')
+        axes[3][1].axhline(y=80, xmin=0, xmax=1, color='r')
+        axes[3][1].axhline(y=20, xmin=0, xmax=1, color='r')
+        axes[3][1].legend()
+
+        self.short_data[['CumuMarketRet', 'CumuStrategyRet']].plot(ax=axes[4][1], rot=45)
+        fig.subplots_adjust(hspace=0.1)
+        plt.setp([a.get_xticklabels() for a in fig.axes[:-1][:-1]], visible=False)
+        for a in fig.axes: a.set_xlabel(' ')
+
+        axes[0][1].legend().set_visible(False)
+        axes[1][1].legend().set_visible(False)
+        axes[2][1].legend().set_visible(False)
+        axes[3][1].legend().set_visible(False)
+        axes[4][1].legend().set_visible(False)
+
+        axes[0][0].set_ylabel('Closing Price')
+        axes[1][0].set_ylabel('Price Difference')
+        axes[2][0].set_ylabel('Trade Volume')
+        axes[3][0].set_ylabel('Stochastic Oscillator')
+        axes[4][0].set_ylabel('Cumulative Returns')
 
         plt.show()
 
 
 if __name__ == '__main__':
     from data_handler import WebToDatabase as qdb
-    db = r'/home/michael/Documents/trading/securities_master.db'
-#    db = r'C:\Users\michael\Documents\databases\securities_master.db'
+#    db = r'/home/michael/Documents/trading/securities_master.db'
+    db = r'C:\Users\michael\Documents\databases\securities_master.db'
     data_handle = qdb(db)
-    macd = MovingAverageConvergenceDivergence((5, 25, 25), '2015-01-01', data_handle)
+    macd = MovingAverageConvergenceDivergence((5, 25, 25), '2017-01-01', data_handle)
     print macd.process_symbol('AAPL')
 #    macd.process_symbol('GOOG')
