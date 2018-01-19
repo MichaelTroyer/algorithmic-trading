@@ -205,9 +205,7 @@ if __name__ == '__main__':
     from portfolio import MarkowitzMeanVariance
     from strategy import MovingAverageConvergenceDivergence
 
-    db = r'/home/michael/Documents/trading/securities_master.db'
-#    db = r'C:\Users\michael\Documents\databases\securities_master.db'
-    data_handle = WebToDatabase(db)
+    data_handle = WebToDatabase()
 
     start_date = '2015-01-01'
 
