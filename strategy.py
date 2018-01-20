@@ -281,4 +281,4 @@ if __name__ == '__main__':
     data_handle = qdb()
     macd = MovingAverageConvergenceDivergence((5, 25, 25), '2017-01-01', data_handle)
 #    print macd.process_symbol('AAPL')
-    macd.process_symbol('GOOG')
+    macd.process_symbol('SPYG')
