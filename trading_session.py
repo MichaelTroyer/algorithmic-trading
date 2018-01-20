@@ -160,6 +160,7 @@ class TradingSession():
     def evaluate_stocklist(self, verbose=True):
         if verbose:
             print 'Number of stocks on stocklist: {}\n'.format(len(self.stocklist))
+            print '-' * 100
             print    ('| Symbol '
                       '| Price  '
                       '|   Change  '
@@ -170,7 +171,7 @@ class TradingSession():
                       '| Sector               '
                       '|'
                       )
-            print '-' * 112
+            print '-' * 100
             pr_str = ('| {:<5}  | ${:<5} | ${:<8} | {:<8} | {:<7} | {:<6} | {:<7} | {:<20} |')
         for symbol in self.stocklist:
             if '.' in symbol[0]: continue

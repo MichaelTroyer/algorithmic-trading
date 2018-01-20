@@ -66,7 +66,7 @@ class MovingAverageConvergenceDivergence(Strategy):
 
             self.crossover_up = []
             self.crossover_dw = []
-            prev_pos = -1
+            prev_pos = 0
             i = 0
             for row in self.data.itertuples():
                 row_date = row.__getattribute__('Index')
@@ -75,7 +75,7 @@ class MovingAverageConvergenceDivergence(Strategy):
                 macd_dlt = row.__getattribute__('MACD_Delta')
                 if prev_pos == 1:
                     if row_macd < macd_dlt < 0:
-                        pos = -1
+                        pos = 0
                         self.crossover_dw.append((row_date, row_close))
                     else:
                         pos = 1
@@ -84,7 +84,6 @@ class MovingAverageConvergenceDivergence(Strategy):
                         pos = 1
                         self.crossover_up.append((row_date, row_close))
                     else:
-#                        pos = -1
                         pos = 0
                 prev_pos = pos
                 self.data.loc[row_date, 'Position'] = pos
@@ -245,7 +244,7 @@ class MovingAverageConvergenceDivergence(Strategy):
         self.data[['CumuMarketRet', 'CumuStrategyRet']].plot(ax=axes[4][0], rot=45)
 
         # Plot the short-term
-        self.short_data = self.data.tail(self.periods[1])
+        self.short_data = self.data.tail(self.periods[0])
 
         self.short_data.Close.plot(ax=axes[0][1], alpha=0.3, rot=45)
         self.short_data[[self.short_ema, self.long_ema]].plot(ax=axes[0][1], rot=45)
