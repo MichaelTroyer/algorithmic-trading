@@ -40,6 +40,10 @@ class MovingAverageConvergenceDivergence(Strategy):
         self.periods = periods
         self.start_date = start_date
         self.data_handler = data_handler
+        self.benchmark_df = data_handler.get_DataFrame('SPY', start_date)
+        self.benchmark_df['MarketLogRet'] = np.log(self.benchmark_df['Close'] / self.benchmark_df['Close'].shift(1))
+        self.benchmark_df['CumuMarketRet'] = self.benchmark_df['MarketLogRet'].cumsum().apply(np.exp)
+        self.benchmark = self.benchmark_df.CumuMarketRet.values[-1]
 
         self.short_ema = 'Close_{}-EMA'.format(self.periods[0])
         self.long_ema = 'Close_{}-EMA'.format(self.periods[1])
@@ -80,7 +84,8 @@ class MovingAverageConvergenceDivergence(Strategy):
                         pos = 1
                         self.crossover_up.append((row_date, row_close))
                     else:
-                        pos = -1
+#                        pos = -1
+                        pos = 0
                 prev_pos = pos
                 self.data.loc[row_date, 'Position'] = pos
                 i += 1
@@ -124,9 +129,8 @@ class MovingAverageConvergenceDivergence(Strategy):
         last_macd = self.data.MACD.tolist()[-1]
         last_macd_ema = self.data[self.macd_ema].tolist()[-1]
 
-        #TODO: Change 0 to an econometric benchmark - ie. SPY return
-        benchmark = 0.15
-        if (self.AnnualizedStrategyLogRet > self.AnnualizedMarketLogRet > benchmark):
+        if (self.AnnualizedStrategyLogRet > self.AnnualizedMarketLogRet and
+            self.AnnualizedStrategyLogRet > self.benchmark):
             if last_macd > last_macd_ema > 0:
                 return 'BUY'
             elif last_macd < last_macd_ema < 0:
@@ -194,8 +198,9 @@ class MovingAverageConvergenceDivergence(Strategy):
         print
         print self.symbol.center(70, '-')
         print
-        print 'Moving Average Convergence Divergence'.center(70)
-        print 'Periods: [{}, {}, {}]'.format(*self.periods)
+        print 'Moving Average Convergence Divergence [{}, {}, {}]'.format(*self.periods).center(70)
+        print
+        print 'Signal                      : {}'.format(self._signal())
         print 'Position                    : {}'.format(self.data.Position.values[-1])
         print 'Current Price               : {}'.format(self.data.Close.values[-1])
         print 'Current Price Short EMA     : {}'.format(self.data[self.short_ema].values[-1])
@@ -209,6 +214,7 @@ class MovingAverageConvergenceDivergence(Strategy):
         print 'Annual Strategy Volatility  : {:.4}'.format(self.AnnualizedStrategyVolatility)
         print 'Cumulative Market Returns   : {:.4}'.format(self.data.CumuMarketRet.values[-1])
         print 'Cumulative Strategy Returns : {:.4}'.format(self.data.CumuStrategyRet.values[-1])
+        print 'Benchmark [SPY] Returns     : {:.4}'.format(self.benchmark)
         print
         self._period_metrics(self.crossover_up, self.crossover_dw)
 
@@ -281,4 +287,5 @@ if __name__ == '__main__':
     data_handle = qdb()
     macd = MovingAverageConvergenceDivergence((5, 25, 25), '2017-01-01', data_handle)
 #    print macd.process_symbol('AAPL')
-    macd.process_symbol('SPYG')
+    print macd.process_symbol('SPYG')
+
