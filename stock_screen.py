@@ -46,7 +46,7 @@ class StockScreen():
             'Industry':          None,
 
             'Symbol':            True,
-            'CompanyName':       True,
+            'CompanyName':       False,
             'Price':             True,
             'Change':            True,
             'ChangePct':         True,
@@ -113,17 +113,17 @@ class StockScreen():
         for sector in top_sectors.keys():
             for s in top_sectors[sector]:
                 # replace millions shorthand
-                if 'M' in s[5]:
-                    s[5] = float(s[5].strip('M')) * 1000000
+                if 'M' in s[4]:
+                    s[4] = float(s[4].strip('M')) * 1000000
                 # replace billions shorthand
-                elif 'B' in s[5]:
-                    s[5] = float(s[5].strip('B')) * 1000000000
+                elif 'B' in s[4]:
+                    s[4] = float(s[4].strip('B')) * 1000000000
                 else:
-                    s[5] = int(s[5].replace(',', ''))
-                s[3] = float(s[3].replace(',', ''))
+                    s[4] = int(s[4].replace(',', ''))
+                s[2] = float(s[2].replace(',', ''))
 
         sector_idx = {sector:
-                      (sum([s[5] * s[3] for s in top_sectors[sector]]) /
+                      (sum([s[4] * s[2] for s in top_sectors[sector]]) /
                        len(top_sectors[sector]))
                       if len(top_sectors[sector]) > 10 else 0
                       for sector in top_sectors.keys()}

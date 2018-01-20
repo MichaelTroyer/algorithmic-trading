@@ -53,7 +53,7 @@ class TradingSession():
         self.pass_sectors = pass_sectors if pass_sectors else list()
 
         print 'Getting target sectors'
-        self.top_sectors = self.screen.get_top_sectors(10)
+        self.top_sectors = self.screen.get_top_sectors(20)
         self.top_sectors += [ls for ls in self.look_sectors if ls not in self.top_sectors]
         self.top_sectors = [ts for ts in self.top_sectors if ts not in self.pass_sectors]
         for ix, sector in enumerate(self.top_sectors, 1):
@@ -160,7 +160,6 @@ class TradingSession():
         if verbose:
             print 'Number of stocks on stocklist: {}\n'.format(len(self.stocklist))
             print    ('| Symbol '
-                      '|       Name      '
                       '| Price  '
                       '|   Change  '
                       '| Percent  '
@@ -171,8 +170,7 @@ class TradingSession():
                       '|'
                       )
             print '-' * 112
-            pr_str = ('| {:<5}  | {:15.15} | ${:<5} | ${:<8} |'
-                      ' {:<8} | {:<7} | {:<6} | {:<7} | {:<20} |')
+            pr_str = ('| {:<5}  | ${:<5} | ${:<8} | {:<8} | {:<7} | {:<6} | {:<7} | {:<20} |')
         for symbol in self.stocklist:
             if '.' in symbol[0]: continue
             try:
@@ -186,9 +184,10 @@ class TradingSession():
 
     def evaluate_watchlist(self):
         print 'Number of stocks on watchlist: {}'.format(len(self.watchlist))
+        plots = True if len(self.watchlist.index.tolist()) < 15 else False
         for symbol in self.watchlist.index.tolist():
             try:
-                signal = self.strategy.process_symbol(symbol)
+                signal = self.strategy.process_symbol(symbol, plot=plots)
                 if signal == 'BUY':
                     (ret, vol, sharpe), weights = self.portfolio.test_order(symbol[0])
                     if sharpe > self.portfolio.get_portfolio_sharpe():
@@ -207,17 +206,17 @@ if __name__ == '__main__':
 
     data_handle = WebToDatabase()
 
-    start_date = '2015-01-01'
+    start_date = '2017-07-01'
 
     cash = 100
     stocks = {'RVSB': 36, 'LGL': 12, 'LLNW': 1}
     symbols, shares = zip(*stocks.items())
 
-    macd = MovingAverageConvergenceDivergence((5, 25, 25), start_date, data_handle)
+    macd = MovingAverageConvergenceDivergence((5, 10, 10), start_date, data_handle)
     mmvp = MarkowitzMeanVariance('Test', symbols, shares, cash, start_date, data_handle)
     screen = StockScreen
 
-    session = TradingSession(name='also_test',
+    session = TradingSession(name='test',
                              cash=cash,
                              stocks=stocks,
                              screen=screen,
