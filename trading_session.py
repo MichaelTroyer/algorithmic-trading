@@ -179,7 +179,7 @@ class TradingSession():
                 if verbose: print pr_str.format(*symbol)
                 signal = self.strategy.process_symbol(symbol[0], summarize=False, plot=False)
                 # Add to the list when in sell, watch until buy
-                if signal == 'SELL':
+                if signal in ('SELL', 'NONE'):
                     self.create_session_event(symbol[0], 'WATCH')
             except Exception as e:
                 print '[+] Evaluate Stocklist Error - {}'.format(e)

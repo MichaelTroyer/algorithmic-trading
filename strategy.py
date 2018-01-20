@@ -41,6 +41,10 @@ class MovingAverageConvergenceDivergence(Strategy):
         self.periods = periods
         self.start_date = start_date
         self.data_handler = data_handler
+        self.benchmark_df = data_handler.get_DataFrame('SPY', start_date)
+        self.benchmark_df['MarketLogRet'] = np.log(self.benchmark_df['Close'] / self.benchmark_df['Close'].shift(1))
+        self.benchmark_df['CumuMarketRet'] = self.benchmark_df['MarketLogRet'].cumsum().apply(np.exp)
+        self.benchmark = self.benchmark_df.CumuMarketRet.values[-1]
 
         self.short_ema = 'Close_{}-EMA'.format(self.periods[0])
         self.long_ema = 'Close_{}-EMA'.format(self.periods[1])
@@ -81,7 +85,8 @@ class MovingAverageConvergenceDivergence(Strategy):
                         pos = 1
                         self.crossover_up.append((row_date, row_close))
                     else:
-                        pos = -1
+#                        pos = -1
+                        pos = 0
                 prev_pos = pos
                 self.data.loc[row_date, 'Position'] = pos
                 i += 1
@@ -125,7 +130,7 @@ class MovingAverageConvergenceDivergence(Strategy):
         last_macd = self.data.MACD.tolist()[-1]
         last_macd_ema = self.data[self.macd_ema].tolist()[-1]
 
-        if (self.AnnualizedStrategyLogRet > self.AnnualizedMarketLogRet > 0):
+        if (self.AnnualizedStrategyLogRet > self.AnnualizedMarketLogRet > 0.8 * self.benchmark):
             if last_macd > last_macd_ema > 0:
                 return 'BUY'
             elif last_macd < last_macd_ema < 0:
