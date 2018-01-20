@@ -213,7 +213,7 @@ class MovingAverageConvergenceDivergence(Strategy):
         self._period_metrics(self.crossover_up, self.crossover_dw)
 
     def _plot(self):
-        fig, axes = plt.subplots(nrows=5, ncols=2, figsize=(20, 15),
+        fig, axes = plt.subplots(nrows=5, ncols=2, figsize=(15, 12),
                                  gridspec_kw = {'width_ratios':[2, 1]})
 #        fig.tight_layout()
 
@@ -239,7 +239,7 @@ class MovingAverageConvergenceDivergence(Strategy):
         self.data[['CumuMarketRet', 'CumuStrategyRet']].plot(ax=axes[4][0], rot=45)
 
         # Plot the short-term
-        self.short_data = self.data.tail(30)
+        self.short_data = self.data.tail(self.periods[1])
 
         self.short_data.Close.plot(ax=axes[0][1], alpha=0.3, rot=45)
         self.short_data[[self.short_ema, self.long_ema]].plot(ax=axes[0][1], rot=45)
@@ -281,4 +281,4 @@ if __name__ == '__main__':
     data_handle = qdb()
     macd = MovingAverageConvergenceDivergence((5, 25, 25), '2017-01-01', data_handle)
 #    print macd.process_symbol('AAPL')
-    macd.process_symbol('GOOG')
+    macd.process_symbol('SPYG')
