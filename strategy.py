@@ -20,8 +20,7 @@ class Strategy(object):
     Strategy is an abstract base class providing an interface for
     all subsequent (inherited) strategy objects.
 
-    Enforces: get_DataFrame() method for retrieving stock data as a
-    Pandas DataFrame object.
+    Enforces: process_symbol() method for calculating buy/sell signals for a given ticker.
     """
 
     __metaclass__ = ABCMeta
@@ -32,7 +31,7 @@ class Strategy(object):
         Processes the stock ticker and returns the signal with
         optional summary and plot
         """
-        raise NotImplementedError("Should implement plot()")
+        raise NotImplementedError("Should implement process_symbol()")
 
 
 class MovingAverageConvergenceDivergence(Strategy):
@@ -139,7 +138,7 @@ class MovingAverageConvergenceDivergence(Strategy):
             else:
                 return 'NONE'
         else:
-            return 'FAIL'
+            return 'PASS'
 
     def _period_metrics(self, buy_date_price_tuples, sell_date_price_tuples):
 
@@ -220,7 +219,7 @@ class MovingAverageConvergenceDivergence(Strategy):
         self._period_metrics(self.crossover_up, self.crossover_dw)
 
     def _plot(self):
-        fig, axes = plt.subplots(nrows=5, ncols=2, figsize=(20, 15),
+        fig, axes = plt.subplots(nrows=5, ncols=2, figsize=(15, 12),
                                  gridspec_kw = {'width_ratios':[2, 1]})
 #        fig.tight_layout()
 
@@ -246,7 +245,7 @@ class MovingAverageConvergenceDivergence(Strategy):
         self.data[['CumuMarketRet', 'CumuStrategyRet']].plot(ax=axes[4][0], rot=45)
 
         # Plot the short-term
-        self.short_data = self.data.tail(30)
+        self.short_data = self.data.tail(self.periods[1])
 
         self.short_data.Close.plot(ax=axes[0][1], alpha=0.3, rot=45)
         self.short_data[[self.short_ema, self.long_ema]].plot(ax=axes[0][1], rot=45)
@@ -289,3 +288,4 @@ if __name__ == '__main__':
     macd = MovingAverageConvergenceDivergence((5, 25, 25), '2017-01-01', data_handle)
 #    print macd.process_symbol('AAPL')
     print macd.process_symbol('SPYG')
+

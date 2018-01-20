@@ -193,15 +193,12 @@ class WebToDatabase(DataHandler):
             return self.get_prices(symbol, start_date)
         except Exception as e:
             raise Exception, '[+] get_DataFrame Error - {}\n{}'.format(e, traceback.format_exc())
-#            raise Exception, '[+] get_DataFrame Error - {}'.format(e)
 
 
 if __name__ == '__main__':
 
     # Testing
-    db = r'/home/michael/Documents/trading/securities_master.db'
-#    db = r'C:\Users\michael\Documents\databases\securities_master.db'
-    data = WebToDatabase(db)
+    data = WebToDatabase()
     chs = data.get_DataFrame('CHS', '2011-02-01')
     rvsb = data.get_DataFrame('RVSB', '2014-01-01')
     print chs.head()
