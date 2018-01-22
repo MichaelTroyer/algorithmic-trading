@@ -14,55 +14,28 @@ import requests
 
 class StockScreen():
     '''Provides methods for rotating sectors and getting lists of stocks.'''
-    def __init__(self):
+    def __init__(self, params):
 
-        self.screen = (r'https://secure.marketwatch.com/tools/'
-                       r'stockresearch/screener/results.asp')
+        self.screen = (r'https://secure.marketwatch.com/tools/stockresearch/screener/results.asp')
 
+        # Defaults
         self.params = {
-            'TradesShareEnable': True,
-            'TradesShareMin':    None,
-            'TradesShareMax':    None,
-
-            'TradeVolEnable':    True,
-            'TradeVolMin':       None,
-            'TradeVolMax':       None,
-
-            'BlockEnable':       False,
-            'BlockAmt':          None,
-            'BlockTime':         None,
-
-            'PERatioEnable':     True,
-            'PERatioMin':        None,
-            'PERatioMax':        None,
-
-            'MktCapEnable':      True,
-            'MktCapMin':         None,
-            'MktCapMax':         None,
-
-            'Exchange':          'All',
-
-            'IndustryEnable':    True,
-            'Industry':          None,
-
-            'Symbol':            True,
-            'CompanyName':       False,
-            'Price':             True,
-            'Change':            True,
-            'ChangePct':         True,
-            'Volume':            True,
-            'LastTradeTime':     False,
-            'FiftyTwoWeekHigh':  False,
-            'FiftyTwoWeekLow':   False,
-            'PERatio':           True,
-            'MarketCap':         True,
-            'MoreInfo':          False,
-
-            'SortyBy':           'Volume',
-            'SortDirection':     'Descending',
-            'ResultsPerPage':    'TwentyFive'
+            'TradesShareEnable': True, 'TradesShareMin': None, 'TradesShareMax': None,
+            'TradeVolEnable': True, 'TradeVolMin':  None, 'TradeVolMax': None,
+            'BlockEnable': False, 'BlockAmt': None, 'BlockTime': None,
+            'PERatioEnable': True, 'PERatioMin': None, 'PERatioMax': None,
+            'MktCapEnable': True, 'MktCapMin': None, 'MktCapMax': None,
+            'Exchange': 'All', 'IndustryEnable': True, 'Industry': None,
+            'Symbol': True, 'CompanyName':  False, 'Price': True, 'Change': True,
+            'ChangePct': True, 'Volume':  True, 'LastTradeTime': False, 'FiftyTwoWeekHigh': False,
+            'FiftyTwoWeekLow': False, 'PERatio': True, 'MarketCap': True, 'MoreInfo': False,
+            'SortyBy': 'Volume',  'SortDirection': 'Descending', 'ResultsPerPage': 'TwentyFive'
             }
 
+        for key, value in params.items():
+            if key in self.params.keys():
+                self.params[key] = value
+            
         self.sectors = [
             'Accounting', 'Agriculture', 'Air Freight', 'Air Transport',
             'Alternative Fuel', 'Aluminum', 'Broadcasting', 'Mortgage REITs',
@@ -102,18 +75,7 @@ class StockScreen():
         product of the volume and the total price change for each of the top
         100 stocks in a given sector, ranked by descending volume.
         '''
-        top_sectors = {sector: self.stock_screen(
-                Industry       = sector,
-                TradesShareMin = 1,
-                TradesShareMax = 20,
-                TradeVolMin    = None,
-                TradeVolMax    = 1000000,
-                PERatioMin     = 0,
-                ResultsPerPage = 'OneHundred',
-                SortyBy        = 'Volume',
-                SortDirection  = 'Descending'
-                )
-                for sector in self.sectors}
+        top_sectors = {sector: self.stock_screen() for sector in self.sectors}
 
         for sector in top_sectors.keys():
             for s in top_sectors[sector]:
@@ -149,14 +111,21 @@ class StockScreen():
             stocks.append([td.text for td in row.find_all("td")])
         return [stock for stock in stocks if stock]
 
-    def stock_screen(self, **kwargs):
-        for keyword, argument in kwargs.items():
-            self.params[keyword] = argument
+    def stock_screen(self):
         return self.get_stocks(self.screen, self.params)
 
 
 if __name__ == '__main__':
-    screen = StockScreen()
+    params = {'TradesShareMin' : 1,
+              'TradesShareMax' : 20,
+              'TradeVolMin'    : None,
+              'TradeVolMax'    : 1000000,
+              'PERatioMin'     : 0,
+              'ResultsPerPage' : 'OneHundred',
+              'SortyBy'        : 'Volume',
+              'SortDirection'  : 'Descending',
+              }
+             
+    screen = StockScreen(params)
     top_sectors = screen.get_top_sectors()
-    stocks = screen.stock_screen(sector=top_sectors[0])
     print top_sectors

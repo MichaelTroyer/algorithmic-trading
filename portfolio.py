@@ -23,79 +23,10 @@ import pandas as pd
 import datetime as dt
 import scipy.optimize as sco
 import scipy.interpolate as sci
-import matplotlib
 import matplotlib.pyplot as plt
-from abc import ABCMeta, abstractmethod
 
 
-class Portfolio(object):
-    """
-    Portfolio is an abstract base class providing an interface for
-    all subsequent (inherited) portfolio objects.
-
-    Enforces:
-    """
-
-    __metaclass__ = ABCMeta
-
-    @abstractmethod
-    def summarize(self):
-        """
-        Returns a string of summary metrics.
-        """
-        raise NotImplementedError("Should implement summary()")
-
-    @abstractmethod
-    def plot(self):
-        """
-        Plots the portfolio.
-        """
-        raise NotImplementedError("Should implement plot()")
-
-    @abstractmethod
-    def size_order(self):
-        """
-        Calculates the optimal size of a purchase position
-        """
-        raise NotImplementedError("Should implement size_order()")
-
-    @abstractmethod
-    def test_order(self):
-        """
-        Calculates the risk/return of the portfolio after addition of a symbol.
-        """
-        raise NotImplementedError("Should implement size_order()")
-
-    @abstractmethod
-    def get_portfolio_return(self):
-        """
-        Returns the average return of the weighted portfolio
-        """
-        raise NotImplementedError("Should implement get_portfolio_return()")
-
-    @abstractmethod
-    def get_portfolio_variance(self):
-        """
-        Returns the average variance of the weighted portfolio
-        """
-        raise NotImplementedError("Should implement get_portfolio_variance()")
-
-    @abstractmethod
-    def get_portfolio_sharpe(self):
-        """
-        Returns the unadjusted Sharpe ratio of the weighted portfolio
-        """
-        raise NotImplementedError("Should implementget_portfolio_sharpe()")
-
-    @abstractmethod
-    def get_portfolio_volatility(self):
-        """
-        Returns the average volatility of the portfolio
-        """
-        raise NotImplementedError("Should implement get_volatility()")
-
-
-class MarkowitzMeanVariance(Portfolio):
+class MarkowitzMeanVariance():
     '''
     Class to implement the mean variance portfolio theory of Markowitz
     '''
@@ -126,43 +57,6 @@ class MarkowitzMeanVariance(Portfolio):
 
         self.stock_value = sum(self.prices * self.shares)
         self.total_value = self.stock_value + self.cash
-
-    def summarize(self):
-        pad = 63
-        print '\n', 'Portfolio Summary'.center(pad, '-'), '\n'
-        print 'Date: {}\n'.format(dt.date.today())
-        print 'Portfolio value:           $ {:6.2f}'.format(self.stock_value)
-        print 'Portfolio cash:            $ {:6.2f}'.format(self.cash)
-        print 'Portfolio total value:     $ {:6.2f}'.format(self.stock_value + self.cash)
-        print 'Annualized Return:     {:10.3f}'.format(self.portfolio_return)
-        print 'Annualized Volatility: {:10.3f}'.format(math.sqrt(self.variance))
-        print 'Sharpe ratio:          {:10.3f}'.format(self.portfolio_return / math.sqrt(self.variance))
-        print '\n' + 'Positions'.center(pad, '-')
-        print '| Symbol  | Shares  |  Price   |  Value   | Weight  | Ret Con |'
-        print '-' * pad
-        for i in range(len(self.symbols)):
-            print '| {:<7} |  {:<5}  | ${:>7} | ${:>7} | {:7.3f} | {:7.3f} |' \
-                ''.format(
-                    self.symbols[i], self.shares[i], round(self.prices[i], 2),
-                    round(self.shares[i] * self.prices[i], 2),
-                    self.weights[i], self.mean_returns[i])
-        print '-' * pad + '\n'
-        opt_weights = self.get_optimal_weights('Sharpe')
-        opt_shares = self.size_order(opt_weights, self.prices, self.total_value)
-        print 'Optimization'.center(pad, '-')
-        print '|  Symbol  |   Weight   |   Shares    |   Current  |  Delta   |'
-        print '-' * pad
-        for sym, wt, oshr, cshr in zip(self.symbols, opt_weights, opt_shares, self.shares):
-            print '|   {:<4}   |   {:6.4f}   |     {:<4}    |    {:<4}    |   {:>4}   |'.format(
-                    sym, wt, oshr, cshr, oshr - cshr)
-        print '-' * pad + '\n'
-        returns, volatility, sharpe = self.test_weights(opt_weights)
-        print 'Optimal return:       {:.3}'.format(returns)
-        print 'Optimal volatility:   {:.3}'.format(volatility)
-        print 'Optimal Sharpe ratio: {:.3}'.format(sharpe)
-        print
-        self.plot()
-        print
 
     def load_data(self):
         '''
@@ -465,6 +359,43 @@ class MarkowitzMeanVariance(Portfolio):
         return [int(investment * weight / price)
                 for weight, price in zip(weights, prices)]
 
+    def summarize(self):
+        pad = 63
+        print '\n', 'Portfolio Summary'.center(pad, '-'), '\n'
+        print 'Date: {}\n'.format(dt.date.today())
+        print 'Portfolio value:           $ {:6.2f}'.format(self.stock_value)
+        print 'Portfolio cash:            $ {:6.2f}'.format(self.cash)
+        print 'Portfolio total value:     $ {:6.2f}'.format(self.stock_value + self.cash)
+        print 'Annualized Return:     {:10.3f}'.format(self.portfolio_return)
+        print 'Annualized Volatility: {:10.3f}'.format(math.sqrt(self.variance))
+        print 'Sharpe ratio:          {:10.3f}'.format(self.portfolio_return / math.sqrt(self.variance))
+        print '\n' + 'Positions'.center(pad, '-')
+        print '| Symbol  | Shares  |  Price   |  Value   | Weight  | Ret Con |'
+        print '-' * pad
+        for i in range(len(self.symbols)):
+            print '| {:<7} |  {:<5}  | ${:>7} | ${:>7} | {:7.3f} | {:7.3f} |' \
+                ''.format(
+                    self.symbols[i], self.shares[i], round(self.prices[i], 2),
+                    round(self.shares[i] * self.prices[i], 2),
+                    self.weights[i], self.mean_returns[i])
+        print '-' * pad + '\n'
+        opt_weights = self.get_optimal_weights('Sharpe')
+        opt_shares = self.size_order(opt_weights, self.prices, self.total_value)
+        print 'Optimization'.center(pad, '-')
+        print '|  Symbol  |   Weight   |   Shares    |   Current  |  Delta   |'
+        print '-' * pad
+        for sym, wt, oshr, cshr in zip(self.symbols, opt_weights, opt_shares, self.shares):
+            print '|   {:<4}   |   {:6.4f}   |     {:<4}    |    {:<4}    |   {:>4}   |'.format(
+                    sym, wt, oshr, cshr, oshr - cshr)
+        print '-' * pad + '\n'
+        returns, volatility, sharpe = self.test_weights(opt_weights)
+        print 'Optimal return:       {:.3}'.format(returns)
+        print 'Optimal volatility:   {:.3}'.format(volatility)
+        print 'Optimal Sharpe ratio: {:.3}'.format(sharpe)
+        print
+        self.plot()
+        print
+        
     def plot(self):
         # TODO: visualize efficient frontier
         plot_rets = []

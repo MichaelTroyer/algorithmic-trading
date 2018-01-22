@@ -11,8 +11,6 @@ data_handler:
 """
 
 
-from abc import ABCMeta, abstractmethod
-from collections import defaultdict
 from datetime import date, datetime, timedelta
 from pandas_datareader import DataReader
 
@@ -31,42 +29,7 @@ qd.ApiConfig.api_key = API_KEY
 us_holidays = holidays.UnitedStates()
 
 
-class DataHandler(object):
-    """
-    DataHandler is an abstract base class providing an interface for
-    all subsequent (inherited) data handling objects.
-
-    Enforces: get_DataFrame() method for retrieving stock data as a
-    Pandas DataFrame object.
-    """
-
-    __metaclass__ = ABCMeta
-
-    def build_database(self, db_path):
-        with sqlite3.connect(db_path) as con:
-            cur = con.cursor()
-
-            cur.execute("CREATE TABLE Prices("
-                        "Symbol TEXT,"
-                        "Date DATE,"
-                        "Open FLOAT,"
-                        "High FLOAT,"
-                        "Low FLOAT,"
-                        "Close FLOAT,"
-                        "Volume INT,"
-                        "Source TEXT"
-                        ");")
-
-    @abstractmethod
-    def get_DataFrame(self):
-        """
-        Provides the mechanisms to retrieve stock data as a Pandas
-        DataFrame object.
-        """
-        raise NotImplementedError("Should implement get_DataFrame()")
-
-
-class WebToDatabase(DataHandler):
+class WebToDatabase():
 
     def __init__(self, db_path=None):
         if not db_path:
@@ -94,6 +57,21 @@ class WebToDatabase(DataHandler):
                     "AND "
                     "P.Date = MX.MaxDate;")
             self.symbols = dict(rows)
+
+    def build_database(self, db_path):
+        with sqlite3.connect(db_path) as con:
+            cur = con.cursor()
+
+            cur.execute("CREATE TABLE Prices("
+                        "Symbol TEXT,"
+                        "Date DATE,"
+                        "Open FLOAT,"
+                        "High FLOAT,"
+                        "Low FLOAT,"
+                        "Close FLOAT,"
+                        "Volume INT,"
+                        "Source TEXT"
+                        ");")
 
     def get_web_data(self, symbol, src, start_date, end_date=None):
         try:
@@ -192,8 +170,10 @@ class WebToDatabase(DataHandler):
                 self.symbols[symbol] = last_trade_date
             return self.get_prices(symbol, start_date)
         except Exception as e:
-            raise Exception, '[+] get_DataFrame Error - {}\n{}'.format(e, traceback.format_exc())
-
+            if verbose:
+                raise Exception, '[+] get_DataFrame Error - {}\n{}'.format(e, traceback.format_exc())
+            else:
+                raise Exception, '[+] get_DataFrame Error - {}'.format(e)
 
 if __name__ == '__main__':
 

@@ -5,7 +5,6 @@ Created on Thu Nov 16 21:24:59 2017
 @author: michael
 
 TODO: Sector balance
-TODO: Market baseline report
 """
 
 
@@ -13,26 +12,14 @@ from datetime import date, datetime
 import os
 import sqlite3
 import traceback
-
 import pandas as pd
 
 
 class TradingSession():
-    def __init__(self,
-                 name,
-                 cash,
-                 stocks,
-                 screen,
-                 strategy,
-                 portfolio,
-                 data_handler,
-                 start_date='2016-01-01',
-                 pass_stocks=None,
-                 look_stocks=None,
-                 pass_sectors=None,
-                 look_sectors=None,
-                 ):
+    def __init__(self, name, cash, stocks, screen, strategy, portfolio, data_handler,
+                 start_date='2017-01-01', pass_stocks=None, session_type='paper'):
 
+        self.session_type = session_type
         self.name = name
         self.cash = cash
         self.stocks = stocks
@@ -42,20 +29,15 @@ class TradingSession():
         self.strategy = strategy
         self.portfolio = portfolio
         self.data = data_handler
-        self.screen = screen()
+        self.screen = screen
 
         self.stock_value = self.portfolio.stock_value
         self.total_value = self.stock_value + self.cash
 
-        self.look_stocks = look_stocks if look_stocks else list()
         self.pass_stocks = pass_stocks if pass_stocks else list()
-        self.look_sectors = look_sectors if look_sectors else list()
-        self.pass_sectors = pass_sectors if pass_sectors else list()
 
         print 'Getting target sectors'
         self.top_sectors = self.screen.get_top_sectors(20)
-        self.top_sectors += [ls for ls in self.look_sectors if ls not in self.top_sectors]
-        self.top_sectors = [ts for ts in self.top_sectors if ts not in self.pass_sectors]
         for ix, sector in enumerate(self.top_sectors, 1):
             print '{:>2}: {}'.format(ix, sector)
 
@@ -64,18 +46,8 @@ class TradingSession():
 
         seen = set()
         for sector in self.top_sectors:
-            #TODO: Parameterize sector and stock screening critieria
-#            print 'Evaluating sector: {}'.format(sector)
-            sector_stocks = self.screen.stock_screen(
-                    Industry       = sector,
-                    TradesShareMin = 1,
-                    TradesShareMax = 20,
-                    TradeVolMin    = None,
-                    TradeVolMax    = 1000000,
-                    PERatioMin     = 0,
-                    ResultsPerPage = 'OneHundred',
-                    SortyBy        = 'Volume',
-                    SortDirection  = 'Descending')
+
+            sector_stocks = self.screen.stock_screen()
             for sector_stock in sector_stocks:
                 sector_stock.append(sector)
                 if sector_stock[0] not in seen:
@@ -158,33 +130,25 @@ class TradingSession():
                 raise Exception, '[+] Evaluate Holdings Error - {}'.format(e)
 
     def evaluate_stocklist(self, verbose=True):
+        pad = '-' * 94
         if verbose:
             print 'Number of stocks on stocklist: {}\n'.format(len(self.stocklist))
-            print '-' * 100
-            print    ('| Symbol '
-                      '| Price  '
-                      '|   Change  '
-                      '| Percent  '
-                      '| Volume  '
-                      '|  P/E   '
-                      '| MarCap  '
-                      '| Sector               '
-                      '|'
-                      )
-            print '-' * 100
+            print pad
+            print '| Symbol | Price  |   Change  | Percent  | Volume  |  P/E   | MarCap  | Sector|'
+            print pad
             pr_str = ('| {:<5}  | ${:<5} | ${:<8} | {:<8} | {:<7} | {:<6} | {:<7} | {:<20} |')
         for symbol in self.stocklist:
             if '.' in symbol[0]: continue
             try:
                 if verbose: print pr_str.format(*symbol)
                 signal = self.strategy.process_symbol(symbol[0], summarize=False, plot=False)
-                # Add to the list when in sell, watch until buy
+                # Add to the list when in sell or none, watch until buy
                 if signal in ('SELL', 'NONE'):
                     self.create_session_event(symbol[0], 'WATCH')
             except Exception as e:
                 print '[+] Evaluate Stocklist Error - {}'.format(e)
 
-    def evaluate_watchlist(self):
+    def evaluate_watchlist(self, verbose=True):
         print 'Number of stocks on watchlist: {}'.format(len(self.watchlist))
         plots = True if len(self.watchlist.index.tolist()) < 15 else False
         for symbol in self.watchlist.index.tolist():
@@ -194,21 +158,22 @@ class TradingSession():
                     (ret, vol, sharpe), weights = self.portfolio.test_order(symbol[0])
                     if sharpe > self.portfolio.get_portfolio_sharpe():
                         self.create_session_event(symbol, 'BUY')
-
             except Exception as e:
-                raise Exception, '[+] Evaluate Watchlist Error - {}\n{}'.format(e, traceback.format_exc())
-#                raise Exception, '[+] Evaluate Watchlist Error - {}'.format(e)
+                if verbose:
+                    raise Exception, '[+] Evaluate Watchlist Error - {}\n{}'.format(e, traceback.format_exc())
+                else:
+                   raise Exception, '[+] Evaluate Watchlist Error - {}'.format(e)
 
 
 if __name__ == '__main__':
     from stock_screen import StockScreen
     from data_handler import WebToDatabase
     from portfolio import MarkowitzMeanVariance
-    from strategy import MovingAverageConvergenceDivergence
+    from strategies.MACD import MovingAverageConvergenceDivergence
 
     data_handle = WebToDatabase()
 
-    start_date = '2017-07-01'
+    start_date = '2017-01-01'
 
     cash = 100
     stocks = {'RVSB': 36, 'LGL': 12, 'LLNW': 1}
@@ -216,20 +181,19 @@ if __name__ == '__main__':
 
     macd = MovingAverageConvergenceDivergence((5, 10, 10), start_date, data_handle)
     mmvp = MarkowitzMeanVariance('Test', symbols, shares, cash, start_date, data_handle)
-    screen = StockScreen
 
-    session = TradingSession(name='test',
-                             cash=cash,
-                             stocks=stocks,
-                             screen=screen,
-                             strategy=macd,
-                             portfolio=mmvp,
-                             data_handler=data_handle,
-                             start_date=start_date)
-    session.evaluate_holdings()
-    session.evaluate_stocklist()
-    session.evaluate_watchlist()
+    params = {'TradesShareMin': 1, 'TradesShareMax': 20,
+              'TradeVolMin': None, 'TradeVolMax': 1000000, 'PERatioMin': 0,
+              'ResultsPerPage': 'OneHundred', 'SortyBy': 'Volume', 'SortDirection': 'Descending'}            
+    screen = StockScreen(params)
 
-    print session.get_session_events('SELL')
-    print session.get_session_events('WATCH')
-    print session.get_session_events('BUY')
+    session = TradingSession(
+        name='test', cash=cash, stocks=stocks, screen=screen, strategy=macd, portfolio=mmvp,
+        data_handler=data_handle, start_date=start_date)
+#    session.evaluate_holdings()
+#    session.evaluate_stocklist()
+#    session.evaluate_watchlist()
+#
+#    print session.get_session_events('SELL')
+#    print session.get_session_events('WATCH')
+#    print session.get_session_events('BUY')
