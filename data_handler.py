@@ -23,7 +23,7 @@ import quandl as qd
 import pandas as pd
 import holidays
 
-API_KEY = 'Njj1rcHsiQnXzaazaivH'
+API_KEY = '...'
 qd.ApiConfig.api_key = API_KEY
 
 us_holidays = holidays.UnitedStates()
